@@ -2,19 +2,23 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Solicitação PROVAC - Final</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitação PROVAC - Operacional</title>
 
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-.container { background: #fff; padding: 20px; max-width: 500px; margin: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-h2 { color: #333; text-align: center; }
-input, button { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; }
-label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; color: #555; }
-button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
-button:disabled { background: #ccc; cursor: not-allowed; }
-.status { font-size: 13px; color: #666; margin-top: 10px; text-align: center; min-height: 20px; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eceff1; padding: 15px; margin: 0; }
+.container { background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+h2 { color: #1a237e; text-align: center; margin-bottom: 5px; }
+p.subtitle { font-size: 12px; color: #78909c; text-align: center; margin-bottom: 25px; }
+input, button { width: 100%; padding: 14px; margin-top: 12px; box-sizing: border-box; border-radius: 6px; border: 1px solid #cfd8dc; font-size: 16px; }
+input[readonly] { background-color: #f5f5f5; color: #757575; cursor: not-allowed; }
+label { display: block; margin-top: 18px; font-weight: 600; font-size: 14px; color: #455a64; }
+button { background: #1b5e20; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+button:active { transform: scale(0.98); }
+button:disabled { background: #b0bec5; cursor: not-allowed; }
+.status { font-size: 13px; font-weight: 500; color: #d32f2f; margin-top: 15px; text-align: center; min-height: 20px; }
 </style>
 </head>
 
@@ -22,33 +26,40 @@ button:disabled { background: #ccc; cursor: not-allowed; }
 
 <div class="container">
     <h2>Manutenção PROVAC</h2>
-    <p style="font-size: 13px; color: #666; text-align: center;">As fotos são compactadas automaticamente.</p>
+    <p class="subtitle">Data Automática e Câmera Ativada</p>
 
     <form id="form">
-        <input type="text" name="nome" placeholder="Seu Nome (Responsável)" required>
-        <input type="date" name="data" required>
+        <input type="text" name="nome" placeholder="Nome do Responsável" required>
+        
+        <label>Data da Solicitação (Fixa):</label>
+        <input type="date" name="data" id="dataAtual" readonly>
 
-        <label>Foto 1 (Local/Problema):</label>
-        <input type="file" id="foto1" accept="image/*" required>
+        <label>Foto 1 (Tirar foto do local):</label>
+        <input type="file" id="foto1" accept="image/*" capture="camera" required>
 
-        <label>Foto 2 (Detalhe):</label>
-        <input type="file" id="foto2" accept="image/*" required>
+        <label>Foto 2 (Tirar foto do detalhe):</label>
+        <input type="file" id="foto2" accept="image/*" capture="camera" required>
 
-        <button type="submit" id="btnEnviar">Enviar Solicitação</button>
+        <button type="submit" id="btnEnviar">Enviar Agora</button>
         <div id="msgStatus" class="status"></div>
     </form>
 </div>
 
 <script>
-/* ====== CONFIGURAÇÃO APLICADA ====== */
+/* ====== CONFIGURAÇÃO ====== */
 const EMAILJS_PUBLIC_KEY  = 'EQu27ao-bGx5zYdtq'; 
 const EMAILJS_SERVICE_ID  = 'service_olt51hs';    
 const EMAILJS_TEMPLATE_ID = 'template_bd9a51o'; 
-/* =================================== */
+/* ========================== */
 
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
-function compressImage(file, maxWidth = 800, quality = 0.7) {
+// Força a data atual e impede alteração
+const campoData = document.getElementById('dataAtual');
+const hoje = new Date().toISOString().split('T')[0];
+campoData.value = hoje;
+
+function compressImage(file, maxWidth = 600, quality = 0.4) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -66,6 +77,8 @@ function compressImage(file, maxWidth = 800, quality = 0.7) {
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'low';
                 ctx.drawImage(img, 0, 0, width, height);
                 resolve(canvas.toDataURL('image/jpeg', quality));
             };
@@ -84,15 +97,15 @@ document.getElementById('form').addEventListener('submit', async function(e){
 
     try {
         btn.disabled = true;
-        btn.innerText = "Processando fotos...";
-        status.innerText = "Comprimindo imagens...";
+        btn.innerText = "Processando...";
+        status.style.color = "#666";
+        status.innerText = "Otimizando imagens da câmera...";
 
         const img1Base64 = await compressImage(f1);
         const img2Base64 = await compressImage(f2);
 
-        status.innerText = "Enviando e-mail...";
-        btn.innerText = "Enviando...";
-
+        status.innerText = "Enviando relatório...";
+        
         const params = {
             nome: this.nome.value,
             data: this.data.value,
@@ -102,17 +115,18 @@ document.getElementById('form').addEventListener('submit', async function(e){
 
         await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
 
-        alert('Solicitação enviada com sucesso!');
+        alert('Relatório enviado com sucesso!');
         this.reset();
+        document.getElementById('dataAtual').value = hoje;
         status.innerText = "";
 
     } catch (err) {
-        console.error("Erro:", err);
-        alert('Erro ao enviar. Verifique sua conexão ou limite do EmailJS.');
-        status.innerText = "Falha no envio.";
+        console.error(err);
+        status.style.color = "red";
+        status.innerText = "Erro no envio. Verifique a conexão.";
     } finally {
         btn.disabled = false;
-        btn.innerText = "Enviar Solicitação";
+        btn.innerText = "Enviar Agora";
     }
 });
 </script>
