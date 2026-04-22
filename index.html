@@ -3,40 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitação PROVAC - Final</title>
-
+    <title>Solicitação PROVAC</title>
     <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eceff1; padding: 15px; margin: 0; }
+        body { font-family: sans-serif; background: #eceff1; padding: 15px; margin: 0; }
         .container { background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a237e; text-align: center; margin-bottom: 5px; }
-        p.subtitle { font-size: 12px; color: #78909c; text-align: center; margin-bottom: 25px; }
+        h2 { color: #1a237e; text-align: center; margin-bottom: 20px; }
         input, button { width: 100%; padding: 14px; margin-top: 12px; box-sizing: border-box; border-radius: 6px; border: 1px solid #cfd8dc; font-size: 16px; }
-        input[readonly] { background-color: #f5f5f5; color: #757575; cursor: not-allowed; }
-        label { display: block; margin-top: 18px; font-weight: 600; font-size: 14px; color: #455a64; }
-        button { background: #1b5e20; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:active { transform: scale(0.98); }
-        button:disabled { background: #b0bec5; cursor: not-allowed; }
-        .status { font-size: 13px; font-weight: 500; color: #d32f2f; margin-top: 15px; text-align: center; min-height: 20px; }
+        input[readonly] { background: #f5f5f5; color: #757575; outline: none; }
+        label { display: block; margin-top: 18px; font-weight: bold; font-size: 14px; color: #455a64; }
+        button { background: #1b5e20; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:disabled { background: #b0bec5; }
+        .status { font-size: 13px; color: #d32f2f; text-align: center; margin-top: 15px; min-height: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Manutenção PROVAC</h2>
-    <p class="subtitle">Registro Oficial de Manutenção</p>
-
     <form id="form">
         <input type="text" name="nome" placeholder="Nome do Responsável" required>
         
-        <label>Data da Solicitação (Automática):</label>
+        <label>Data da Manutenção (Automática):</label>
         <input type="date" name="data" id="dataAtual" readonly>
 
-        <label>Foto 1 (Local do Problema):</label>
+        <label>Foto 1 (Abrir Câmera):</label>
         <input type="file" id="foto1" accept="image/*" capture="camera" required>
 
-        <label>Foto 2 (Detalhe/Peça):</label>
+        <label>Foto 2 (Detalhe):</label>
         <input type="file" id="foto2" accept="image/*" capture="camera" required>
 
         <button type="submit" id="btnEnviar">Enviar Relatório</button>
@@ -45,48 +39,39 @@
 </div>
 
 <script>
-    /* ====== CONFIGURAÇÃO GERAL ====== */
+    // CONFIGURAÇÕES ATUALIZADAS
+    const SERVICE_ID  = 'service_t57bwhj'; 
     const PUBLIC_KEY  = 'EQu27ao-bGx5zYdtq'; 
-    const SERVICE_ID  = 'service_olt51hs';    
     const TEMPLATE_ID = 'template_bd9a51o'; 
-    /* ================================ */
 
     emailjs.init(PUBLIC_KEY);
 
-    // FUNÇÃO PARA GARANTIR DATA ATUAL NO CARREGAMENTO
-    window.onload = function() {
-        const campoData = document.getElementById('dataAtual');
+    // Garante que a data atual seja preenchida corretamente
+    function fixarData() {
+        const campo = document.getElementById('dataAtual');
         const hoje = new Date();
-        const offset = hoje.getTimezoneOffset() * 60000;
-        const dataLocal = (new Date(hoje - offset)).toISOString().split('T')[0];
-        if (campoData) campoData.value = dataLocal;
-    };
+        const fuso = hoje.getTimezoneOffset() * 60000;
+        const dataLocal = (new Date(hoje - fuso)).toISOString().split('T')[0];
+        if (campo) campo.value = dataLocal;
+    }
+    fixarData();
 
-    // COMPRESSÃO INTELIGENTE (MAX 500PX / QUALIDADE 0.3)
+    // Compressão agressiva para evitar erro de tamanho no Gmail
     async function compressImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (event) => {
+            reader.onload = (e) => {
                 const img = new Image();
-                img.src = event.target.result;
+                img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const maxWidth = 500;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxWidth) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Converte para JPEG (muito mais leve que PNG)
+                    const maxWidth = 500; 
+                    let w = img.width, h = img.height;
+                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    // Exporta como JPEG qualidade 0.3 (muito leve)
                     resolve(canvas.toDataURL('image/jpeg', 0.3));
                 };
             };
@@ -95,48 +80,40 @@
 
     document.getElementById('form').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
         const btn = document.getElementById('btnEnviar');
         const status = document.getElementById('msgStatus');
-        const f1 = document.getElementById('foto1').files[0];
-        const f2 = document.getElementById('foto2').files[0];
 
         try {
             btn.disabled = true;
             btn.innerText = "Processando...";
-            status.style.color = "#666";
-            status.innerText = "Otimizando imagens para o envio...";
+            status.style.color = "#444";
+            status.innerText = "Otimizando imagens...";
 
-            const img1Base64 = await compressImage(f1);
-            const img2Base64 = await compressImage(f2);
+            const img1 = await compressImage(document.getElementById('foto1').files[0]);
+            const img2 = await compressImage(document.getElementById('foto2').files[0]);
 
-            status.innerText = "Enviando e-mail...";
-
-            const params = {
+            status.innerText = "Enviando via Gmail...";
+            
+            await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
                 nome: this.nome.value,
                 data: this.data.value,
-                foto1: img1Base64,
-                foto2: img2Base64
-            };
+                foto1: img1,
+                foto2: img2
+            });
 
-            await emailjs.send(SERVICE_ID, TEMPLATE_ID, params);
-
-            alert('Enviado com sucesso para a PROVAC!');
+            alert('Sucesso! Relatório enviado para a PROVAC.');
             this.reset();
-            window.onload(); // Reseta a data para hoje
+            fixarData();
             status.innerText = "";
-
         } catch (err) {
-            console.error("Erro no envio:", err);
-            status.style.color = "red";
-            status.innerText = "Erro ao enviar. Verifique a conexão.";
-            alert("Falha no envio. Se o problema persistir, tente usar o Wi-Fi.");
+            console.error(err);
+            alert('Erro ao enviar. Verifique se o serviço do Gmail está ativo no EmailJS.');
+            status.innerText = "Falha no envio.";
         } finally {
             btn.disabled = false;
             btn.innerText = "Enviar Relatório";
         }
     });
 </script>
-
 </body>
 </html>
