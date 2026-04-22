@@ -3,76 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitação PROVAC</title>
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <title>PROVAC - Oficial</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         body { font-family: sans-serif; background: #eceff1; padding: 15px; margin: 0; }
-        .container { background: #fff; padding: 25px; max-width: 450px; margin: 20px auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a237e; text-align: center; margin-bottom: 20px; }
-        input, button { width: 100%; padding: 14px; margin-top: 12px; box-sizing: border-box; border-radius: 6px; border: 1px solid #cfd8dc; font-size: 16px; }
-        input[readonly] { background: #f5f5f5; color: #757575; outline: none; }
-        label { display: block; margin-top: 18px; font-weight: bold; font-size: 14px; color: #455a64; }
-        button { background: #1b5e20; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:disabled { background: #b0bec5; }
-        .status { font-size: 13px; color: #d32f2f; text-align: center; margin-top: 15px; min-height: 20px; }
+        .container { background: #fff; padding: 20px; max-width: 400px; margin: 20px auto; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #1b5e20; color: #fff; font-weight: bold; border: none; cursor: pointer; }
+        label { display: block; margin-top: 15px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h2>Manutenção PROVAC</h2>
+    <h2 style="text-align:center">Manutenção PROVAC</h2>
     <form id="form">
-        <input type="text" name="nome" placeholder="Nome do Responsável" required>
-        
-        <label>Data da Manutenção (Automática):</label>
+        <input type="text" name="nome" placeholder="Seu Nome" required>
+        <label>Data:</label>
         <input type="date" name="data" id="dataAtual" readonly>
-
-        <label>Foto 1 (Abrir Câmera):</label>
+        <label>Foto 1:</label>
         <input type="file" id="foto1" accept="image/*" capture="camera" required>
-
-        <label>Foto 2 (Detalhe):</label>
+        <label>Foto 2:</label>
         <input type="file" id="foto2" accept="image/*" capture="camera" required>
-
         <button type="submit" id="btnEnviar">Enviar Relatório</button>
-        <div id="msgStatus" class="status"></div>
+        <p id="status" style="text-align:center; font-size:12px; color: #666;"></p>
     </form>
 </div>
 
 <script>
-    // CONFIGURAÇÕES ATUALIZADAS
     const SERVICE_ID  = 'service_t57bwhj'; 
     const PUBLIC_KEY  = 'EQu27ao-bGx5zYdtq'; 
     const TEMPLATE_ID = 'template_bd9a51o'; 
 
     emailjs.init(PUBLIC_KEY);
 
-    // Garante que a data atual seja preenchida corretamente
-    function fixarData() {
-        const campo = document.getElementById('dataAtual');
-        const hoje = new Date();
-        const fuso = hoje.getTimezoneOffset() * 60000;
-        const dataLocal = (new Date(hoje - fuso)).toISOString().split('T')[0];
-        if (campo) campo.value = dataLocal;
-    }
-    fixarData();
+    // Data automática
+    const campo = document.getElementById('dataAtual');
+    const d = new Date();
+    campo.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
-    // Compressão agressiva para evitar erro de tamanho no Gmail
-    async function compressImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
+    async function compress(file) {
+        return new Promise((res) => {
+            const r = new FileReader();
+            r.readAsDataURL(file);
+            r.onload = (e) => {
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const maxWidth = 500; 
+                    const max = 500;
                     let w = img.width, h = img.height;
-                    if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                    if (w > max) { h = Math.round((h * max) / w); w = max; }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    // Exporta como JPEG qualidade 0.3 (muito leve)
-                    resolve(canvas.toDataURL('image/jpeg', 0.3));
+                    res(canvas.toDataURL('image/jpeg', 0.3));
                 };
             };
         });
@@ -81,19 +64,15 @@
     document.getElementById('form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnEnviar');
-        const status = document.getElementById('msgStatus');
-
+        const st = document.getElementById('status');
+        
         try {
             btn.disabled = true;
-            btn.innerText = "Processando...";
-            status.style.color = "#444";
-            status.innerText = "Otimizando imagens...";
-
-            const img1 = await compressImage(document.getElementById('foto1').files[0]);
-            const img2 = await compressImage(document.getElementById('foto2').files[0]);
-
-            status.innerText = "Enviando via Gmail...";
+            st.innerText = "Processando fotos...";
+            const img1 = await compress(document.getElementById('foto1').files[0]);
+            const img2 = await compress(document.getElementById('foto2').files[0]);
             
+            st.innerText = "Enviando via Gmail...";
             await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
                 nome: this.nome.value,
                 data: this.data.value,
@@ -101,17 +80,15 @@
                 foto2: img2
             });
 
-            alert('Sucesso! Relatório enviado para a PROVAC.');
+            alert('Sucesso! Enviado.');
             this.reset();
-            fixarData();
-            status.innerText = "";
+            st.innerText = "";
         } catch (err) {
             console.error(err);
-            alert('Erro ao enviar. Verifique se o serviço do Gmail está ativo no EmailJS.');
-            status.innerText = "Falha no envio.";
+            alert('Erro: Verifique se o Gmail está RECONECTADO no painel EmailJS.');
+            st.innerText = "Falha no envio.";
         } finally {
             btn.disabled = false;
-            btn.innerText = "Enviar Relatório";
         }
     });
 </script>
