@@ -37,10 +37,10 @@
         <input type="date" name="data" id="data_hoje" readonly>
 
         <label>ETIQUETA DA TROCA DE ÓLEO:</label>
-        <input type="file" id="f1" required>
+        <input type="file" id="f1" accept="image/*" required>
 
         <label>PAINEL COM HODÔMETRO VISÍVEL:</label>
-        <input type="file" id="f2" required>
+        <input type="file" id="f2" accept="image/*" required>
 
         <button type="submit" id="btn">ENVIAR AGORA</button>
         <div id="status"></div>
@@ -48,15 +48,21 @@
 </div>
 
 <script>
+    // Configurações EmailJS
     const S_ID = 'service_t57bwhj'; 
     const P_K  = 'EQu27ao-bGx5zYdtq'; 
     const T_ID = 'template_bd9a51o'; 
+    
+    // URL do seu Google Apps Script (Workspace)
+    const urlPlanilha = "https://script.google.com/macros/s/AKfycbzV-PBP8yigYCrFa8RsHYHcRFbFDSujKDGbhRye-lRJCtN89a9_-EYQVyAeXv-gLeHC/exec";
 
     emailjs.init(P_K);
 
+    // Data automática
     const dt = new Date();
     document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
+    // Função para redimensionar fotos
     async function redimensionar(arquivo) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -85,27 +91,40 @@
         try {
             btn.disabled = true;
             st.style.color = "blue";
-            st.innerText = "Processando fotos...";
+            st.innerText = "Processando e enviando...";
 
             const img1 = await redimensionar(document.getElementById('f1').files[0]);
             const img2 = await redimensionar(document.getElementById('f2').files[0]);
             
-            st.innerText = "Enviando relatório...";
-            
-            await emailjs.send(S_ID, T_ID, {
+            const payload = {
                 nome: this.nome.value,
                 placa: this.placa.value.toUpperCase(),
-                data: this.data.value,
+                data: this.data.value
+            };
+
+            // 1. Enviar para o EmailJS (Gmail com Fotos)
+            await emailjs.send(S_ID, T_ID, {
+                ...payload,
                 foto1: img1,
                 foto2: img2
+            });
+
+            // 2. Enviar para o Google Sheets (Registro Workspace)
+            await fetch(urlPlanilha, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                body: JSON.stringify(payload)
             });
 
             alert('RELATÓRIO ENVIADO COM SUCESSO!');
             this.reset();
             document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             st.innerText = "";
+
         } catch (err) {
-            alert('ERRO: Verifique a conexão ou reconecte o Gmail no EmailJS.');
+            console.error(err);
+            alert('ERRO AO ENVIAR. Verifique a conexão.');
             st.style.color = "red";
             st.innerText = "Falha no envio.";
         } finally {
