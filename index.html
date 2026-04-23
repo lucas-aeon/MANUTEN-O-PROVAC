@@ -54,7 +54,6 @@
 
     emailjs.init(P_K);
 
-    // Ajusta a data automaticamente
     const dt = new Date();
     document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
@@ -86,7 +85,7 @@
         try {
             btn.disabled = true;
             st.style.color = "blue";
-            st.innerText = "Preparando fotos e dados...";
+            st.innerText = "Processando fotos e dados...";
 
             const img1 = await redimensionar(document.getElementById('f1').files[0]);
             const img2 = await redimensionar(document.getElementById('f2').files[0]);
@@ -103,12 +102,11 @@
 
             alert('RELATÓRIO ENVIADO COM SUCESSO!');
             this.reset();
-            // Mantém a data preenchida após o reset
             document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             st.innerText = "";
         } catch (err) {
             console.error(err);
-            alert('ERRO: Certifique-se de que o Gmail está reconectado no painel do EmailJS.');
+            alert('ERRO: Certifique-se de que o Gmail está conectado no EmailJS.');
             st.style.color = "red";
             st.innerText = "Falha no envio.";
         } finally {
