@@ -36,10 +36,10 @@
         <label>Data Atual (Automática):</label>
         <input type="date" name="data" id="data_hoje" readonly>
 
-        <label>ETIQUETA DA TROCA DE OLEO:</label>
+        <label>ETIQUETA DA TROCA DE ÓLEO:</label>
         <input type="file" id="f1" accept="image/*" capture="camera" required>
 
-        <label>PAINEL COM HODOMETRO VISIVEL:</label>
+        <label>PAINEL COM HODÔMETRO VISÍVEL:</label>
         <input type="file" id="f2" accept="image/*" capture="camera" required>
 
         <button type="submit" id="btn">ENVIAR AGORA</button>
@@ -48,13 +48,13 @@
 </div>
 
 <script>
-    // IDs de serviço e template configurados no seu EmailJS
     const S_ID = 'service_t57bwhj'; 
     const P_K  = 'EQu27ao-bGx5zYdtq'; 
     const T_ID = 'template_bd9a51o'; 
 
     emailjs.init(P_K);
 
+    // Ajusta a data automaticamente
     const dt = new Date();
     document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
@@ -86,7 +86,7 @@
         try {
             btn.disabled = true;
             st.style.color = "blue";
-            st.innerText = "Processando fotos e dados...";
+            st.innerText = "Preparando fotos e dados...";
 
             const img1 = await redimensionar(document.getElementById('f1').files[0]);
             const img2 = await redimensionar(document.getElementById('f2').files[0]);
@@ -103,13 +103,14 @@
 
             alert('RELATÓRIO ENVIADO COM SUCESSO!');
             this.reset();
+            // Mantém a data preenchida após o reset
             document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             st.innerText = "";
         } catch (err) {
             console.error(err);
-            alert('ERRO: Verifique a conexão ou reconecte o Gmail no EmailJS!');
+            alert('ERRO: Certifique-se de que o Gmail está reconectado no painel do EmailJS.');
             st.style.color = "red";
-            st.innerText = "Falha na conexão.";
+            st.innerText = "Falha no envio.";
         } finally {
             btn.disabled = false;
         }
