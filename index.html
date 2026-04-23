@@ -85,12 +85,12 @@
         try {
             btn.disabled = true;
             st.style.color = "blue";
-            st.innerText = "Processando fotos e dados...";
+            st.innerText = "Processando fotos...";
 
             const img1 = await redimensionar(document.getElementById('f1').files[0]);
             const img2 = await redimensionar(document.getElementById('f2').files[0]);
             
-            st.innerText = "Enviando via Gmail...";
+            st.innerText = "Enviando relatório...";
             
             await emailjs.send(S_ID, T_ID, {
                 nome: this.nome.value,
@@ -106,7 +106,7 @@
             st.innerText = "";
         } catch (err) {
             console.error(err);
-            alert('ERRO: Certifique-se de que o Gmail está conectado no EmailJS.');
+            alert('ERRO: Verifique a conexão ou o painel EmailJS.');
             st.style.color = "red";
             st.innerText = "Falha no envio.";
         } finally {
