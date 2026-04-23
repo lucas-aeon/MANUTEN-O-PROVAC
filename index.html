@@ -8,25 +8,47 @@
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
         .box { background: #fff; padding: 20px; max-width: 400px; margin: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { color: #1a237e; text-align: center; margin-top: 0; }
-        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
-        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        
+        /* Ajuste da Logo */
+        .logo-header { text-align: center; margin-bottom: 20px; }
+        .logo-header img { max-width: 180px; height: auto; }
+
+        h2 { color: #1a237e; text-align: center; margin-top: 0; font-size: 1.4em; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; color: #333; }
+        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        
+        input[readonly] { background: #f9f9f9; color: #777; outline: none; }
         button { background: #2e7d32; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button:active { background: #1b5e20; }
         button:disabled { background: #999; }
+        
         #status { text-align: center; font-size: 13px; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
+
 <div class="box">
+    <div class="logo-header">
+        <img src="https://raw.githubusercontent.com/lucas-aeon/MANUTEN-O-PROVAC/main/PROVAC%20LOGO.jpg" alt="Logo PROVAC" onerror="this.src='https://via.placeholder.com/180x80?text=PROVAC'">
+    </div>
+
     <h2>Manutenção PROVAC</h2>
+
     <form id="form_provac">
         <input type="text" name="nome" placeholder="Nome do Técnico" required>
-        <label>Data Atual:</label>
+        
+        <label>Placa do Veículo:</label>
+        <input type="text" name="placa" placeholder="Ex: ABC1D23" required style="text-transform: uppercase;">
+
+        <label>Data Atual (Automática):</label>
         <input type="date" name="data" id="data_hoje" readonly>
+
         <label>Foto 1 (Principal):</label>
         <input type="file" id="f1" accept="image/*" capture="camera" required>
+
         <label>Foto 2 (Detalhe):</label>
         <input type="file" id="f2" accept="image/*" capture="camera" required>
+
         <button type="submit" id="btn">ENVIAR AGORA</button>
         <div id="status"></div>
     </form>
@@ -39,7 +61,7 @@
 
     emailjs.init(P_K);
 
-    // Ajusta a data automaticamente
+    // Ajusta a data automaticamente conforme fuso horário local
     const dt = new Date();
     document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
@@ -52,12 +74,12 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const max = 450; // Diminuí um pouco mais para garantir o envio
+                    const max = 450; // Redução para garantir o limite de tamanho do Gmail
                     let w = img.width, h = img.height;
                     if (w > max) { h = Math.round((h * max) / w); w = max; }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.25)); // Qualidade 0.25 para ser super leve
+                    resolve(canvas.toDataURL('image/jpeg', 0.25)); // Qualidade otimizada
                 };
             };
         });
@@ -71,25 +93,29 @@
         try {
             btn.disabled = true;
             st.style.color = "blue";
-            st.innerText = "Preparando fotos... aguarde.";
+            st.innerText = "Preparando fotos e dados...";
 
             const img1 = await redimensionar(document.getElementById('f1').files[0]);
             const img2 = await redimensionar(document.getElementById('f2').files[0]);
             
-            st.innerText = "Enviando pelo Gmail...";
+            st.innerText = "Enviando via Gmail...";
             
             await emailjs.send(S_ID, T_ID, {
                 nome: this.nome.value,
+                placa: this.placa.value.toUpperCase(),
                 data: this.data.value,
                 foto1: img1,
                 foto2: img2
             });
 
-            alert('RELATÓRIO ENVIADO!');
+            alert('RELATÓRIO ENVIADO COM SUCESSO!');
             this.reset();
+            // Restaura a data após o envio
+            document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             st.innerText = "";
         } catch (err) {
             console.error(err);
+            // Mensagem de erro orientando reconexão no painel EmailJS
             alert('ERRO: Clique em RECONNECT no painel do EmailJS e autorize o Gmail!');
             st.style.color = "red";
             st.innerText = "Falha na conexão.";
