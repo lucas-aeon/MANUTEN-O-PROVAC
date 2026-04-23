@@ -53,16 +53,16 @@
     const P_K  = 'EQu27ao-bGx5zYdtq'; 
     const T_ID = 'template_bd9a51o'; 
     
-    // Seu link do Google Apps Script atualizado
+    // Seu Link do Apps Script
     const urlPlanilha = "https://script.google.com/macros/s/AKfycbzV-PBP8yigYCrFa8RsHYHcRFbFDSujKDGbhRye-lRJCtN89a9_-EYQVyAeXv-gLeHC/exec";
 
     emailjs.init(P_K);
 
-    // Data automática
+    // Data automática de hoje
     const dt = new Date();
     document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
-    // Redimensionar fotos para envio leve
+    // Redimensionamento de imagem para evitar erros de limite de tamanho
     async function redimensionar(arquivo) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -102,14 +102,14 @@
                 data: this.data.value
             };
 
-            // 1. Enviar para o EmailJS (Fotos no Gmail)
+            // 1. Enviar para EmailJS (E-mail com fotos)
             await emailjs.send(S_ID, T_ID, {
                 ...payload,
                 foto1: img1,
                 foto2: img2
             });
 
-            // 2. Enviar para a Planilha do Google
+            // 2. Enviar para a Planilha Google (Registro de texto)
             await fetch(urlPlanilha, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -124,7 +124,7 @@
 
         } catch (err) {
             console.error(err);
-            alert('ERRO AO ENVIAR. Verifique a conexão.');
+            alert('ERRO AO ENVIAR. Verifique a conexão ou EmailJS.');
             st.style.color = "red";
             st.innerText = "Falha no envio.";
         } finally {
