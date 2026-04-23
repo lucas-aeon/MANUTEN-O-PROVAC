@@ -37,10 +37,10 @@
         <input type="date" name="data" id="data_hoje" readonly>
 
         <label>ETIQUETA DA TROCA DE ÓLEO:</label>
-        <input type="file" id="f1" accept="image/*" required>
+        <input type="file" id="f1" required>
 
         <label>PAINEL COM HODÔMETRO VISÍVEL:</label>
-        <input type="file" id="f2" accept="image/*" required>
+        <input type="file" id="f2" required>
 
         <button type="submit" id="btn">ENVIAR AGORA</button>
         <div id="status"></div>
@@ -105,8 +105,7 @@
             document.getElementById('data_hoje').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             st.innerText = "";
         } catch (err) {
-            console.error(err);
-            alert('ERRO: Verifique a conexão ou o painel EmailJS.');
+            alert('ERRO: Verifique a conexão ou reconecte o Gmail no EmailJS.');
             st.style.color = "red";
             st.innerText = "Falha no envio.";
         } finally {
